@@ -4,8 +4,8 @@ import "./styles.scss";
 import PostCard from "./components/PostCard";
 import { 
   Button, Container, CssBaseline, FormControl, 
-  Grid, Icon, IconButton, InputLabel, MenuItem, Select, Stack, Typography,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
+  Grid, Icon, IconButton, Input, InputLabel, MenuItem, Select, Stack, Typography,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Paper
 } from '@mui/material';
 
 import { useTheme, ThemeProvider, createTheme } from '@mui/material/styles';
@@ -22,6 +22,8 @@ function App() {
   const colorMode = React.useContext(ColorModeContext);
 
   const [lang, setLang] = React.useState('en');
+  const [sentence, setSentence] = React.useState("វិទ្យាស្ថានខុងជឺនៃរាជបណ្ឌិត្យសភាកម្ពុជា");
+  const [details, setDetails] = React.useState([{name:"",roma:"",ipa:"",meaning:""}, {name:"",roma:"",ipa:"",meaning:""}]);
 
   const handleLangChange = (event) => {
     setLang(event.target.value);
@@ -43,25 +45,37 @@ function App() {
     return words;
   }
 
-  const splitAndDetails = (sentence) => {
+  const splitAndDetails = async (sentence) => {
     let words = splitKhmer(sentence);
-    return words.map((word) => {
+    let dtls = [];
+    for (let word of words) {
       let ans = {name: word, roma: "", ipa: "", meaning: ""}
 
-      // // open the Wiktionary webpage
-      // let resp = await fetch("https://en.wiktionary.org/w/api.php?action=parse&prop=text&disablepp=1&format=json&formatversion=2&page=" + word, {
-      //   method: "GET"
-      // })
+      // open the Wiktionary webpage
+      let resp = await fetch("https://en.wiktionary.org/w/api.php?origin=*&action=parse&prop=text&formatversion=2&page=" + word, {
+        method: "GET"
+      });
 
-      // if (resp.ok) {
-      //   const parser = new DOMParser();
-      //   let doc = parser.parseFromString(resp, 'text/html');
-      //   ans.roma = doc.querySelector("#mw-content-text > div.mw-parser-output > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > span.IPA");
-      //   ans.ipa = doc.querySelector("#mw-content-text > div.mw-parser-output > table > tbody > tr > td > table > tbody > tr:nth-last-child(1) > td:nth-child(2) > span");
-      // }
-      
-      return ans;
-    });
+      if (resp.ok) {
+        const parser = new DOMParser();
+        let text = await resp.text();
+        text = text.replace(/\\&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<');
+        let doc = parser.parseFromString(text, 'text/html');
+        
+        ans.roma = doc.querySelector("#mw-content-text > div:nth-child(2) > div > pre > span:nth-child(16) > div > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > span.IPA").textContent;
+        ans.ipa = doc.querySelector("#mw-content-text > div:nth-child(2) > div > pre > span:nth-child(16) > div > table > tbody > tr > td > table > tbody > tr:nth-last-child(1) > td:nth-child(2) > span").textContent;
+
+      }
+      dtls.push(ans);
+    }
+    console.log(dtls);
+    return dtls;
+  }
+
+  const handleClick = async () => {
+    splitKhmer(sentence);
+    let dtls = await splitAndDetails(sentence); // caution await
+    setDetails(dtls);
   }
 
   const domain = "http://yangcx.tk/";
@@ -104,9 +118,24 @@ function App() {
           </FormControl>
 
         </Stack>
+
+        <Typography>
+            Split Khmer sentences into words and then look up its romanization, pronunciation and meaning (later) in Wiktionary.
+        </Typography>
+
+
+            <TextField defaultValue="វិទ្យាស្ថានខុងជឺនៃរាជបណ្ឌិត្យសភាកម្ពុជា" id="input" onChange={(v) => setSentence(v.value)}
+              multiline
+              minRows={2} 
+              maxRows={Infinity} />
+            <Stack direction="row" justifyContent="flex-end">
+              <Button variant="outlined" onClick={() => handleClick()} sx={{width: "auto"}}>Lookup</Button>
+            </Stack>
+
+
       
         <Typography  variant="h5">
-          {splitKhmer('វិទ្យាស្ថានខុងជឺនៃរាជបណ្ឌិត្យសភាកម្ពុជា').join(' ')}
+          {splitKhmer("").join(' ')}
         </Typography>
 
         <TableContainer component={Paper}>
@@ -120,7 +149,7 @@ function App() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {splitAndDetails('វិទ្យាស្ថានខុងជឺនៃរាជបណ្ឌិត្យសភាកម្ពុជា').map((word, i) => (
+              {details.map((word, i) => (
                 <TableRow
                   key={i}
                   sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
