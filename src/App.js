@@ -35,18 +35,25 @@ function App() {
 
   const splitFixes = {"រាជបណ្ឌិត្យសភា": ["រាជ", "បណ្ឌិត្យ", "សភា"]};
 
-  const splitKhmer = (sentence) => {
-    let words = split(sentence);
+  const splitKhmer = () => {
+    let words = [];
+    try {
+      words = split(sentence);
+    } catch (TypeError) {
+      words = [];
+    }
+    console.log(sentence)
     // split further some words according to customized `splitFixes`
     for (const [k, v] of Object.entries(splitFixes)) {
       while (words.indexOf(k) != -1)
         words.splice(words.indexOf(k), 1, ...v);
     }
+    
     return words;
   }
 
-  const splitAndDetails = async (sentence) => {
-    let words = splitKhmer(sentence);
+  const splitAndDetails = async () => {
+    let words = splitKhmer();
     let dtls = [];
     for (let word of words) {
       let ans = {name: word, roma: "", ipa: "", meaning: ""}
@@ -59,22 +66,31 @@ function App() {
       if (resp.ok) {
         const parser = new DOMParser();
         let text = await resp.text();
-        text = text.replace(/\\&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<');
-        let doc = parser.parseFromString(text, 'text/html');
-        
-        ans.roma = doc.querySelector("#mw-content-text > div:nth-child(2) > div > pre > span:nth-child(16) > div > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > span.IPA").textContent;
-        ans.ipa = doc.querySelector("#mw-content-text > div:nth-child(2) > div > pre > span:nth-child(16) > div > table > tbody > tr > td > table > tbody > tr:nth-last-child(1) > td:nth-child(2) > span").textContent;
-
+        if (text != undefined) {
+          // console.log(text)
+          try {
+            text = text.replace(/\\&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<');
+          } catch (TypeError) {
+            text = '';
+          }
+          let doc = parser.parseFromString(text, 'text/html');
+          
+          let selected = doc.querySelector("#mw-content-text > div:nth-child(2) > div > pre > span:nth-child(16) > div > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > span.IPA");
+          if (selected != null)
+            ans.roma = selected.textContent;
+          selected = doc.querySelector("#mw-content-text > div:nth-child(2) > div > pre > span:nth-child(16) > div > table > tbody > tr > td > table > tbody > tr:nth-last-child(1) > td:nth-child(2) > span");
+          if (selected != null)
+            ans.ipa = selected.textContent;
+        }
       }
       dtls.push(ans);
     }
-    console.log(dtls);
     return dtls;
   }
 
   const handleClick = async () => {
-    splitKhmer(sentence);
-    let dtls = await splitAndDetails(sentence); // caution await
+    splitKhmer();
+    let dtls = await splitAndDetails(); // caution await
     setDetails(dtls);
   }
 
@@ -124,7 +140,7 @@ function App() {
         </Typography>
 
 
-            <TextField defaultValue="វិទ្យាស្ថានខុងជឺនៃរាជបណ្ឌិត្យសភាកម្ពុជា" id="input" onChange={(v) => setSentence(v.value)}
+            <TextField defaultValue="វិទ្យាស្ថានខុងជឺនៃរាជបណ្ឌិត្យសភាកម្ពុជា" id="input" onChange={(v) => setSentence(v.target.value)}
               multiline
               minRows={2} 
               maxRows={Infinity} />
@@ -135,7 +151,7 @@ function App() {
 
       
         <Typography  variant="h5">
-          {splitKhmer("").join(' ')}
+          {splitKhmer().join(' ')}
         </Typography>
 
         <TableContainer component={Paper}>
