@@ -130,7 +130,7 @@ function App() {
     setDetails(dtls);
   }
 
-  const domain = "http://yangcx.tk/";
+  const domain = "https://twaqngu.com/";
 
   return (
     <div>

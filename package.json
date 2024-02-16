@@ -1,7 +1,7 @@
 {
-  "name": "ethanyangcx",
+  "name": "khmer-starter",
   "version": "1.0.0",
-  "description": "Ethan Yang Chenxi",
+  "description": "Khmer Words Splitting and Looking Up",
   "keywords": [
     "react",
     "starter"
@@ -13,17 +13,17 @@
     "@emotion/styled": "^11.9.3",
     "@mui/icons-material": "^5.10.3",
     "@mui/material": "^5.9.2",
-    "axios": "^0.27.2",
+    "axios": "^1.6.7",
     "node-sass": "^9.0.0",
     "purecss": "^2.0.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.3.0",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "split-khmer": "1.0.1"
   },
   "devDependencies": {
-    "typescript": "^4.7.4"
+    "typescript": "^4.9.5"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -1,6 +1,6 @@
 {
     "background_color": "#ffffff",
-    "description": "Record Our Love",
+    "description": "Khmer Starter",
     "display": "fullscreen",
     "icons": [
       {
@@ -19,7 +19,7 @@
         "type": "image/png"
       }
     ],
-    "name": "Ethan Yang Chenxi",
-    "short_name": "EthanYangCX",
+    "name": "Khmer Starter",
+    "short_name": "KM1",
     "start_url": "."
   }
