@@ -70,17 +70,53 @@ function App() {
           // console.log(text)
           try {
             text = text.replace(/\\&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<');
+            text = text.replaceAll(/\&\#(\d+)\;/g, (match, code) => String.fromCharCode(code));
+            // 不知道为何总是没办法处理 &#160;
+            //text = text.replaceAll("&#160;", ' ');
+            text = text.replace(/\\n/g, '\n');
           } catch (TypeError) {
             text = '';
           }
           let doc = parser.parseFromString(text, 'text/html');
-          
-          let selected = doc.querySelector("#mw-content-text > div:nth-child(2) > div > pre > span:nth-child(16) > div > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td:nth-child(2) > span.IPA");
+
+          // 开始去除包含Khmer的h2之前的内容：
+          // Step 1 获取文档中所有的 h2 标签
+          const h2Elements = doc.querySelectorAll('h2');
+
+          // Step 2 遍历每个 h2 标签
+          h2Elements.forEach(h2 => {
+              // 检查 h2 标签的文本内容是否包含 "Khmer"
+              if (h2.textContent.includes('Khmer')) {
+                  // 如果包含，则将该 h2 标签之前的内容移除
+                  let currentNode = h2.previousSibling;
+                  while (currentNode && currentNode.nodeType !== Node.ELEMENT_NODE) {
+                      const previousNode = currentNode.previousSibling;
+                      currentNode.parentNode.removeChild(currentNode);
+                      currentNode = previousNode;
+                  }
+              }
+          });
+
+          // 现在，doc 变量中存储的是已经去除了 "Khmer" 标题之前内容的 DOM 文档
+
+          // 暂时取巧通过设置的不同fontsize来设置selector，以后找找更好的方式。
+          // 示例放在了Untitled-1.html，网页的结构也在变，以前直接通过层级可以方便地设置selector
+          let selected = doc.querySelector("span.IPA[lang='km'][style='font-size:95%']");
           if (selected != null)
             ans.roma = selected.textContent;
-          selected = doc.querySelector("#mw-content-text > div:nth-child(2) > div > pre > span:nth-child(16) > div > table > tbody > tr > td > table > tbody > tr:nth-last-child(1) > td:nth-child(2) > span");
+
+          selected = doc.querySelector("span.IPA[lang='km'][style='font-size:110%']");
           if (selected != null)
             ans.ipa = selected.textContent;
+
+          selected = doc.querySelector("ol");
+          if (selected != null) {
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = selected.textContent;
+            ans.meaning = tempDiv.innerHTML;
+            ans.meaning = ans.meaning.replaceAll("&nbsp;", ' ');
+          }
+            
         }
       }
       dtls.push(ans);
@@ -136,7 +172,7 @@ function App() {
         </Stack>
 
         <Typography>
-            Split Khmer sentences into words and then look up its romanization, pronunciation and meaning (later) in Wiktionary.
+            Split Khmer sentences into words and then look up its romanization, pronunciation and meaning in Wiktionary.
         </Typography>
 
 
@@ -161,7 +197,7 @@ function App() {
                 <TableCell>Word</TableCell>
                 <TableCell align="right">Ortho Romaji</TableCell>
                 <TableCell align="right">IPA</TableCell>
-                <TableCell align="right">Meaning (first)</TableCell>
+                <TableCell align="right">Meaning</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -175,7 +211,7 @@ function App() {
                   </TableCell>
                   <TableCell align="right">{word.roma}</TableCell>
                   <TableCell align="right">{word.ipa}</TableCell>
-                  <TableCell align="right">{word.meaning}</TableCell>
+                  <TableCell align="left" sx={{ whiteSpace: 'pre-wrap' }}>{word.meaning}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
